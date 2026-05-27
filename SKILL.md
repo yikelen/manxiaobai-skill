@@ -12,6 +12,19 @@ metadata:
 
 BASE URL: `https://api.manxiaobai.online/v1` | 文档: https://api.manxiaobai.online/about
 
+## 文件结构
+
+```
+manxiaobai-skill/
+├── .env                       ← 凭证（不入库）
+├── .gitignore
+├── SKILL.md                   ← 本文件
+├── references/
+│   └── api-docs-full.md       ← 官方文档存档
+└── scripts/
+    └── manxiaobai.py          ← CLI 封装脚本
+```
+
 ## 配置
 
 编辑 skill 目录下的 `.env` 文件：
@@ -29,12 +42,35 @@ TENCENT_COS_BUCKET=
 
 ## 使用方式
 
+### CLI 封装（推荐）
+
+```bash
+# 文生图
+python3 scripts/manxiaobai.py --prompt "描述" --size 1824x1024
+
+# 图生图（单参考图）
+python3 scripts/manxiaobai.py --prompt "描述" --image ref.png
+
+# 多参考图
+python3 scripts/manxiaobai.py --prompt "图一的人物放入图二的场景" --image char.png --image scene.png
+
+# 换模型/尺寸
+python3 scripts/manxiaobai.py --model gpt-image-2-2k --size 2048x1152 --prompt "描述"
+
+# 视频（返回 task_id，需手动轮询下载）
+python3 scripts/manxiaobai.py --prompt "描述" --video 6 --image ref.png
+```
+
+脚本自动完成：读 `.env` → 选 Key → 调接口 → 处理响应 → 上传 COS → 输出公网 URL。
+
+### 手动调用
+
 Agent 加载此 skill 后，按以下步骤操作：
 
 1. 读取 skill 目录下的 `.env` 获取凭证
 2. 根据任务选择模型（生图用 `gpt-image-2-1k`，视频用 `grok-imagine-video`）
 3. 按下方对应接口的示例构造请求，替换凭证和参数
-4. 响应处理：`gpt-image-2` 返回 URL 直链，`-1k/-2k/-4k` 返回 base64 data URL，需 base64 解码
+4. 响应处理：`gpt-image-2` 返回 URL 直链，`-1k/-2k/-4k` 返回 base64 data URL
 5. 下载后上传 COS 获取公网链接
 
 ## 自动选择 Key
