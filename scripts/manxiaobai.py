@@ -108,15 +108,38 @@ def generate_video(args) -> str:
     if args.image:
         files["input_reference[]"] = (os.path.basename(args.image[0]), open(args.image[0], "rb"))
 
+    # 提交
     r = requests.post("https://api.manxiaobai.online/v1/videos", headers=headers, files=files)
     task = r.json()
     if "task_id" not in task:
         sys.exit(f"视频提交失败: {json.dumps(task, ensure_ascii=False)}")
     tid = task["task_id"]
     print(f"task_id: {tid}")
-    print(f"轮询: curl https://api.manxiaobai.online/v1/videos/{tid} -H 'Authorization: Bearer ...'")
-    print(f"下载: curl -L -o out.mp4 https://api.manxiaobai.online/v1/videos/{tid}/content -H 'Authorization: Bearer ...'")
-    return tid
+
+    # 轮询等待完成
+    print("等待生成", end="", flush=True)
+    while True:
+        time.sleep(10)
+        r = requests.get(f"https://api.manxiaobai.online/v1/videos/{tid}", headers=headers)
+        status = r.json().get("status", "")
+        progress = r.json().get("progress", 0)
+        print(".", end="", flush=True)
+        if status == "completed":
+            print(" 完成")
+            break
+        if status == "failed":
+            sys.exit("视频生成失败")
+
+    # 下载
+    ts = time.strftime("%Y%m%d_%H%M%S")
+    mp4_path = f"/tmp/manxiaobai_video_{ts}.mp4"
+    r = requests.get(f"https://api.manxiaobai.online/v1/videos/{tid}/content", headers=headers)
+    with open(mp4_path, "wb") as f:
+        f.write(r.content)
+    print(f"下载: {len(r.content)} bytes")
+
+    # 上传 COS
+    return cos_upload(mp4_path, f"videos/{model}_{ts}.mp4")
 
 
 def main():
