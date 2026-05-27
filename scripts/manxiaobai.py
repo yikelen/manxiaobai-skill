@@ -50,17 +50,10 @@ def pick_key(model: str) -> str:
 
 
 def cos_upload(local_path: str, key: str) -> str:
-    js_path = SKILL_DIR / "scripts" / "_cos_upload.js"
-    if not js_path.exists():
-        js_path.write_text("""\
-const COS = require('cos-nodejs-sdk-v5');
-const fs = require('fs');
-const [f, k] = process.argv.slice(2);
-const c = new COS({SecretId:process.env.TENCENT_COS_SECRET_ID, SecretKey:process.env.TENCENT_COS_SECRET_KEY});
-c.putObject({Bucket:process.env.TENCENT_COS_BUCKET, Region:process.env.TENCENT_COS_REGION, Key:k, Body:fs.createReadStream(f)},
-  (e,d) => { if(e){console.error(e);process.exit(1);} console.log(`https://${process.env.TENCENT_COS_BUCKET}.cos.${process.env.TENCENT_COS_REGION}.myqcloud.com/${k}`); });
-""")
-    r = subprocess.run(["node", str(js_path), local_path, key], capture_output=True, text=True, timeout=60)
+    r = subprocess.run(
+        ["node", str(SKILL_DIR / "scripts" / "cos_upload.js"), local_path, key],
+        capture_output=True, text=True, timeout=60,
+    )
     if r.returncode != 0:
         sys.exit(f"COS 上传失败: {r.stderr}")
     return r.stdout.strip()
