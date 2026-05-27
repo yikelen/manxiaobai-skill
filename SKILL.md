@@ -25,11 +25,7 @@ TENCENT_COS_REGION=
 TENCENT_COS_BUCKET=
 ```
 
-使用前加载：
-
-```bash
-source .env
-```
+使用前填写 `.env` 文件中的凭证即可。
 
 ## 自动选择 Key
 
