@@ -21,6 +21,7 @@
   视频: task_id + 轮询/下载命令
 """
 import os, sys, json, base64, time, subprocess, argparse
+import requests
 from pathlib import Path
 from openai import OpenAI
 
@@ -93,16 +94,24 @@ def generate_image(args) -> str:
 
 
 def generate_video(args) -> str:
-    import requests
-    key = pick_key(args.model)
+    model = "grok-imagine-video"
+    key = pick_key(model)
     headers = {"Authorization": f"Bearer {key}"}
-    data = {"model": args.model, "prompt": args.prompt, "seconds": str(args.video), "size": VIDEO_SIZE, "resolution_name": "720p", "preset": "normal"}
-    files = {}
+    files = {
+        "model": (None, model),
+        "prompt": (None, args.prompt),
+        "seconds": (None, str(args.video)),
+        "size": (None, VIDEO_SIZE),
+        "resolution_name": (None, "720p"),
+        "preset": (None, "normal"),
+    }
     if args.image:
-        files["input_reference[]"] = open(args.image[0], "rb")
+        files["input_reference[]"] = (os.path.basename(args.image[0]), open(args.image[0], "rb"))
 
-    r = requests.post("https://api.manxiaobai.online/v1/videos", headers=headers, data=data, files=files)
+    r = requests.post("https://api.manxiaobai.online/v1/videos", headers=headers, files=files)
     task = r.json()
+    if "task_id" not in task:
+        sys.exit(f"视频提交失败: {json.dumps(task, ensure_ascii=False)}")
     tid = task["task_id"]
     print(f"task_id: {tid}")
     print(f"轮询: curl https://api.manxiaobai.online/v1/videos/{tid} -H 'Authorization: Bearer ...'")
