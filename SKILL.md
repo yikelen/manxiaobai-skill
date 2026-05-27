@@ -45,11 +45,7 @@ TENCENT_COS_BUCKET=
 pip install -r requirements.txt
 npm install
 
-# Linux/Mac
 python3 scripts/manxiaobai.py --prompt "提示词"
-
-# Windows
-python scripts/manxiaobai.py --prompt "提示词"
 ```
 
 ### 参数
