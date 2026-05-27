@@ -17,12 +17,12 @@ BASE URL: `https://api.manxiaobai.online/v1` | 文档: https://api.manxiaobai.on
 编辑 skill 目录下的 `.env` 文件：
 
 ```bash
-MANXIAOBAI_IMAGINE_KEY=sk-xxx   # Imagine2 生图/改图
-MANXIAOBAI_GROK_KEY=sk-xxx      # Grok 视频生成
-TENCENT_COS_SECRET_ID=AKIDxxx
-TENCENT_COS_SECRET_KEY=xxx
-TENCENT_COS_REGION=ap-guangzhou
-TENCENT_COS_BUCKET=asobi-1325788711
+MANXIAOBAI_IMAGINE_KEY=   # Imagine2 生图/改图
+MANXIAOBAI_GROK_KEY=      # Grok 视频生成
+TENCENT_COS_SECRET_ID=
+TENCENT_COS_SECRET_KEY=
+TENCENT_COS_REGION=
+TENCENT_COS_BUCKET=
 ```
 
 使用前加载：
