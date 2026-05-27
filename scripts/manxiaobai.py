@@ -16,9 +16,7 @@
   --image      参考图路径，可多次指定（图生图/图生视频）
   --video      视频秒数，传 6 或 10
 
-返回:
-  生图: COS 公网 URL
-  视频: task_id + 轮询/下载命令
+返回: COS 公网 URL
 """
 import os, sys, json, base64, time, subprocess, argparse
 import requests
@@ -78,7 +76,6 @@ def generate_image(args) -> str:
     start = time.time()
 
     if args.image:
-        files_args = [("image[]", open(img, "rb")) for img in args.image]
         r = client.images.edit(model=args.model, prompt=args.prompt, image=open(args.image[0], "rb"), n=1, size=args.size)
     else:
         r = client.images.generate(model=args.model, prompt=args.prompt, n=1, size=args.size)
@@ -122,7 +119,6 @@ def generate_video(args) -> str:
         time.sleep(10)
         r = requests.get(f"https://api.manxiaobai.online/v1/videos/{tid}", headers=headers)
         status = r.json().get("status", "")
-        progress = r.json().get("progress", 0)
         print(".", end="", flush=True)
         if status == "completed":
             print(" 完成")

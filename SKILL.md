@@ -73,30 +73,14 @@ python3 scripts/manxiaobai.py --prompt "将背景改为樱花庭院" --image ref
 # 多参考图
 python3 scripts/manxiaobai.py --prompt "图一的角色放入图二的场景" --image char.png --image scene.png
 
-# 文生视频（返回 task_id 和下载命令）
+# 文生视频
 python3 scripts/manxiaobai.py --prompt "海边玩耍的小狗" --video 6
 
 # 图生视频
 python3 scripts/manxiaobai.py --prompt "镜头缓慢推进" --video 6 --image ref.png
 ```
 
-所有生图命令返回统一格式：COS 公网 URL。
-
-## 自动选择 Key
-
-- `gpt-image-2*` → `MANXIAOBAI_IMAGINE_KEY`
-- `grok-imagine-video` → `MANXIAOBAI_GROK_KEY`
-
-## 模型选择
-
-| 场景 | 模型 | 说明 |
-|---|---|---|
-| 头像、封面草稿、普通图 | `gpt-image-2-1k` | **默认首选** |
-| 海报、角色设定、较高清 | `gpt-image-2-2k` | 高清素材 |
-| 高分辨率成片 | `gpt-image-2-4k` | 耗时最长 |
-| 返回 URL 直链 | `gpt-image-2` | 无需处理 base64 |
-
-⚠️ 模型名和尺寸档位必须保持一致，不能混搭。
+所有命令返回统一格式：COS 公网链接。
 
 ## 尺寸表
 
@@ -108,19 +92,6 @@ python3 scripts/manxiaobai.py --prompt "镜头缓慢推进" --video 6 --image re
 | gpt-image-2 | 1024x1024, 1536x1024, 1024x1536, 1824x1024, 1024x1824, 1360x1024, 1024x1360, 2384x1024 |
 
 超时: 1K 180s+ / 2K 300s+ / 4K 600s+
-
-## 视频生成
-
-模型 `grok-imagine-video`。任务轮询模式，CLI 输出 task_id 和轮询/下载命令。
-
-| 参数 | 值 |
-|---|---|
-| seconds | 6 或 10 |
-| size | 1024x1024, 1792x1024, 1024x1792 |
-| resolution_name | 720p |
-| preset | normal |
-
-典型耗时 ~60-70s（6s），输出 ~7MB MP4。
 
 ## 错误参考
 
