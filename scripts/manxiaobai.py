@@ -60,14 +60,10 @@ const c = new COS({SecretId:process.env.TENCENT_COS_SECRET_ID, SecretKey:process
 c.putObject({Bucket:process.env.TENCENT_COS_BUCKET, Region:process.env.TENCENT_COS_REGION, Key:k, Body:fs.createReadStream(f)},
   (e,d) => { if(e){console.error(e);process.exit(1);} console.log(`https://${process.env.TENCENT_COS_BUCKET}.cos.${process.env.TENCENT_COS_REGION}.myqcloud.com/${k}`); });
 """)
-    result = subprocess.run(
-        ["node", str(js_path), local_path, key],
-        capture_output=True, text=True, timeout=60,
-        env={**os.environ, "NODE_OPTIONS": "--no-deprecation"},
-    )
-    if result.returncode != 0:
-        sys.exit(f"COS 上传失败: {result.stderr}")
-    return result.stdout.strip()
+    r = subprocess.run(["node", str(js_path), local_path, key], capture_output=True, text=True, timeout=60)
+    if r.returncode != 0:
+        sys.exit(f"COS 上传失败: {r.stderr}")
+    return r.stdout.strip()
 
 
 def handle_response(resp) -> bytes:
