@@ -1,5 +1,5 @@
 ---
-name: manxiaobai
+name: manxiaobai-skill
 description: "漫小白 API：Imagine2 文生图/图生图（单参考图、多参考图）+ Grok 视频生成（文生视频、图生视频）。自动选择 Key、处理 base64/URL 两种响应格式。"
 version: 1.2.0
 metadata:
