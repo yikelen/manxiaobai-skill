@@ -1,3 +1,5 @@
 .env
 scripts/cos_upload.js
 node_modules/
+scripts/_cos_upload.js
+node_modules/

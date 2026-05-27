@@ -1,7 +1,7 @@
 ---
 name: manxiaobai-skill
-description: "漫小白 API：Imagine2 文生图/图生图（单参考图、多参考图）+ Grok 视频生成（文生视频、图生视频）。自动选择 Key、处理 base64/URL 两种响应格式。"
-version: 1.2.0
+description: "漫小白 API：Imagine2 文生图/图生图 + Grok 视频生成。CLI 一键调用，自动处理 Key 选择、base64/URL 响应、COS 上传。"
+version: 1.3.0
 metadata:
   hermes:
     tags: [image-generation, video-generation, manxiaobai, imagine2, grok, api]
@@ -19,64 +19,73 @@ manxiaobai-skill/
 ├── .env                       ← 凭证（不入库）
 ├── .gitignore
 ├── SKILL.md                   ← 本文件
+├── requirements.txt           ← Python 依赖
 ├── references/
 │   └── api-docs-full.md       ← 官方文档存档
 └── scripts/
-    └── manxiaobai.py          ← CLI 封装脚本
+    └── manxiaobai.py          ← CLI 入口脚本
 ```
 
 ## 配置
 
-编辑 skill 目录下的 `.env` 文件：
+编辑 `.env` 文件，填入凭证：
 
 ```bash
-MANXIAOBAI_IMAGINE_KEY=   # Imagine2 生图/改图
-MANXIAOBAI_GROK_KEY=      # Grok 视频生成
+MANXIAOBAI_IMAGINE_KEY=
+MANXIAOBAI_GROK_KEY=
 TENCENT_COS_SECRET_ID=
 TENCENT_COS_SECRET_KEY=
 TENCENT_COS_REGION=
 TENCENT_COS_BUCKET=
 ```
 
-使用前填写 `.env` 文件中的凭证即可。
-
-## 使用方式
-
-### CLI 封装（推荐）
+## CLI 使用
 
 ```bash
-# 文生图
-python3 scripts/manxiaobai.py --prompt "描述" --size 1824x1024
+pip install -r requirements.txt
+npm install cos-nodejs-sdk-v5
 
-# 图生图（单参考图）
-python3 scripts/manxiaobai.py --prompt "描述" --image ref.png
-
-# 多参考图
-python3 scripts/manxiaobai.py --prompt "图一的人物放入图二的场景" --image char.png --image scene.png
-
-# 换模型/尺寸
-python3 scripts/manxiaobai.py --model gpt-image-2-2k --size 2048x1152 --prompt "描述"
-
-# 视频（返回 task_id，需手动轮询下载）
-python3 scripts/manxiaobai.py --prompt "描述" --video 6 --image ref.png
+python3 scripts/manxiaobai.py --prompt "提示词"
 ```
 
-脚本自动完成：读 `.env` → 选 Key → 调接口 → 处理响应 → 上传 COS → 输出公网 URL。
+### 参数
 
-### 手动调用
+| 参数 | 必填 | 默认值 | 说明 |
+|---|---|---|---|
+| `--prompt` | 是 | — | 提示词 |
+| `--model` | 否 | `gpt-image-2-1k` | 模型名 |
+| `--size` | 否 | `1024x1024` | 输出尺寸 |
+| `--image` | 否 | — | 参考图路径（图生图），可多次指定 |
+| `--video` | 否 | — | 视频秒数，6 或 10 |
 
-Agent 加载此 skill 后，按以下步骤操作：
+### 示例
 
-1. 读取 skill 目录下的 `.env` 获取凭证
-2. 根据任务选择模型（生图用 `gpt-image-2-1k`，视频用 `grok-imagine-video`）
-3. 按下方对应接口的示例构造请求，替换凭证和参数
-4. 响应处理：`gpt-image-2` 返回 URL 直链，`-1k/-2k/-4k` 返回 base64 data URL
-5. 下载后上传 COS 获取公网链接
+```bash
+# 文生图 → COS 链接
+python3 scripts/manxiaobai.py --prompt "一只橘猫在窗台上晒太阳"
+
+# 指定模型和尺寸
+python3 scripts/manxiaobai.py --model gpt-image-2-2k --size 2048x1152 --prompt "二次元海报"
+
+# 图生图（单参考图）
+python3 scripts/manxiaobai.py --prompt "将背景改为樱花庭院" --image ref.png
+
+# 多参考图
+python3 scripts/manxiaobai.py --prompt "图一的角色放入图二的场景" --image char.png --image scene.png
+
+# 文生视频（返回 task_id 和下载命令）
+python3 scripts/manxiaobai.py --prompt "海边玩耍的小狗" --video 6
+
+# 图生视频
+python3 scripts/manxiaobai.py --prompt "镜头缓慢推进" --video 6 --image ref.png
+```
+
+所有生图命令返回统一格式：COS 公网 URL。
 
 ## 自动选择 Key
 
-- `gpt-image-2*` → `$MANXIAOBAI_IMAGINE_KEY`
-- `grok-imagine-video` → `$MANXIAOBAI_GROK_KEY`
+- `gpt-image-2*` → `MANXIAOBAI_IMAGINE_KEY`
+- `grok-imagine-video` → `MANXIAOBAI_GROK_KEY`
 
 ## 模型选择
 
@@ -89,28 +98,7 @@ Agent 加载此 skill 后，按以下步骤操作：
 
 ⚠️ 模型名和尺寸档位必须保持一致，不能混搭。
 
-## 错误参考
-
-| 错误 | 原因 |
-|---|---|
-| `401` | Key 错误或未携带 |
-| `model_not_found` | 模型名写错或 Key 无权限 |
-| `invalid size` | 尺寸不支持，API 返回 `allowed_sizes` |
-| `upstream returned error` | 上游故障，稍后重试 |
-| `Failed to fetch` | 超时，调大 `--max-time` |
-
-## 生图: `POST /images/generations`
-
-JSON body，默认 `gpt-image-2-1k`。
-
-```bash
-curl -s --max-time 300 "https://api.manxiaobai.online/v1/images/generations" \
-  -H "Authorization: Bearer $MANXIAOBAI_IMAGINE_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"model":"gpt-image-2-1k","prompt":"...","size":"1024x1024","response_format":"url"}'
-```
-
-### 尺寸表
+## 尺寸表
 
 | 模型 | 可用尺寸 |
 |---|---|
@@ -121,102 +109,25 @@ curl -s --max-time 300 "https://api.manxiaobai.online/v1/images/generations" \
 
 超时: 1K 180s+ / 2K 300s+ / 4K 600s+
 
-## 图生图/改图: `POST /images/edits`
+## 视频生成
 
-**multipart/form-data**（不是 JSON）。
+模型 `grok-imagine-video`。任务轮询模式，CLI 输出 task_id 和轮询/下载命令。
 
-### 单参考图
+| 参数 | 值 |
+|---|---|
+| seconds | 6 或 10 |
+| size | 1024x1024, 1792x1024, 1024x1792 |
+| resolution_name | 720p |
+| preset | normal |
 
-```bash
-curl -s --max-time 300 "https://api.manxiaobai.online/v1/images/edits" \
-  -H "Authorization: Bearer $MANXIAOBAI_IMAGINE_KEY" \
-  -F "model=gpt-image-2-1k" \
-  -F "prompt=..." \
-  -F "size=1024x1024" \
-  -F "image[]=@/path/to/ref.png"
-```
+典型耗时 ~60-70s（6s），输出 ~7MB MP4。
 
-### 多参考图
+## 错误参考
 
-按上传顺序对应图一、图二、图三，prompt 中明确说明各自作用：
-
-```bash
-curl -s --max-time 300 "https://api.manxiaobai.online/v1/images/edits" \
-  -H "Authorization: Bearer $MANXIAOBAI_IMAGINE_KEY" \
-  -F "model=gpt-image-2-1k" \
-  -F "prompt=图一的角色放入图二的场景，换姿势，保持角色一致" \
-  -F "size=1024x1024" \
-  -F "image[]=@/tmp/char.png" \
-  -F "image[]=@/tmp/scene.png"
-```
-
-### Pitfalls
-
-- 必须用 `-F`（multipart），不能用 `-d`（JSON）
-- `/images/generations` + multipart `image[]` 不可用（内部路由到 dall-e）
-- `gpt-image-2` 返回 URL；`gpt-image-2-1k/-2k/-4k` 返回 base64
-
-## 响应处理 + 上传 COS
-
-`gpt-image-2` → URL → 下载；`gpt-image-2-1k/-2k/-4k` → base64 → 解码。最终上传 COS。
-
-```bash
-# 情况1: base64 响应（-1k/-2k/-4k）
-B64=$(echo "$RESP" | python3 -c "import sys,json;u=json.load(sys.stdin)['data'][0]['url'];print(u.split(',',1)[1])")
-echo "$B64" | base64 -d > /tmp/out.png
-
-# 情况2: URL 响应（gpt-image-2 无档位）
-URL=$(echo "$RESP" | python3 -c "import sys,json;print(json.load(sys.stdin)['data'][0]['url'])")
-curl -sL -o /tmp/out.png "$URL"
-
-# 上传 COS（需安装 cos-nodejs-sdk-v5）
-node -e "
-const COS = require('cos-nodejs-sdk-v5');
-const fs = require('fs');
-const cos = new COS({SecretId:process.env.TENCENT_COS_SECRET_ID, SecretKey:process.env.TENCENT_COS_SECRET_KEY});
-cos.putObject({Bucket:process.env.TENCENT_COS_BUCKET, Region:process.env.TENCENT_COS_REGION, Key:'images/out.png', Body:fs.createReadStream('/tmp/out.png')}, (e,d) => {
-  if(e) { console.error(e); process.exit(1); }
-  console.log('https://'+process.env.TENCENT_COS_BUCKET+'.cos.'+process.env.TENCENT_COS_REGION+'.myqcloud.com/images/out.png');
-});
-"
-```
-
-## 视频: `POST /videos`
-
-任务轮询（提交 → 轮询 → 下载）。模型: `grok-imagine-video`
-
-### 文生视频
-
-```bash
-# 1. 提交
-TASK=$(curl -s "https://api.manxiaobai.online/v1/videos" \
-  -H "Authorization: Bearer $MANXIAOBAI_GROK_KEY" \
-  -F "model=grok-imagine-video" \
-  -F "prompt=..." \
-  -F "seconds=6" \
-  -F "size=1792x1024" \
-  -F "resolution_name=720p" \
-  -F "preset=normal")
-TASK_ID=$(echo "$TASK" | python3 -c "import sys,json;print(json.load(sys.stdin)['task_id'])")
-
-# 2. 轮询
-while true; do
-  STATUS=$(curl -s "https://api.manxiaobai.online/v1/videos/$TASK_ID" \
-    -H "Authorization: Bearer $MANXIAOBAI_GROK_KEY" | python3 -c "import sys,json;print(json.load(sys.stdin).get('status',''))")
-  [ "$STATUS" = "completed" ] || [ "$STATUS" = "failed" ] && break
-  sleep 10
-done
-
-# 3. 下载
-curl -sL -o output.mp4 "https://api.manxiaobai.online/v1/videos/$TASK_ID/content" \
-  -H "Authorization: Bearer $MANXIAOBAI_GROK_KEY"
-```
-
-### 图生视频
-
-加 `-F "input_reference[]=@/path/to/ref.png"` 即可，其余同上。
-
-### Pitfalls
-
-- `seconds` 仅支持 6 或 10
-- 典型耗时 ~60-70s（6s），输出 7MB 左右 MP4
+| 错误 | 原因 |
+|---|---|
+| `401` | Key 错误或未携带 |
+| `model_not_found` | 模型名写错或 Key 无权限 |
+| `invalid size` | 尺寸不支持 |
+| `upstream returned error` | 上游故障，稍后重试 |
+| `Failed to fetch` | 超时 |
