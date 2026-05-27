@@ -42,9 +42,9 @@ def load_env():
 
 def pick_key(model: str) -> str:
     if model.startswith("gpt-image-2"):
-        return os.environ["MANXIAOBAI_IMAGINE_KEY"]
+        return os.environ["MANXIAOBAI_VIP_KEY"]
     if model.startswith("grok-imagine-"):
-        return os.environ["MANXIAOBAI_GROK_KEY"]
+        return os.environ["MANXIAOBAI_DEFAULT_KEY"]
     sys.exit(f"不支持的模型: {model}")
 
 

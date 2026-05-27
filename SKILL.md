@@ -31,8 +31,10 @@ manxiaobai-skill/
 编辑 `.env` 文件，填入凭证：
 
 ```bash
-MANXIAOBAI_IMAGINE_KEY=
-MANXIAOBAI_GROK_KEY=
+# vip 分组 — gpt-image-2-1k/2k/4k
+MANXIAOBAI_VIP_KEY=
+# default 分组 — grok-imagine-video, gpt-image-2
+MANXIAOBAI_DEFAULT_KEY=
 TENCENT_COS_SECRET_ID=
 TENCENT_COS_SECRET_KEY=
 TENCENT_COS_REGION=
