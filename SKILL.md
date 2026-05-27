@@ -27,6 +27,16 @@ TENCENT_COS_BUCKET=
 
 使用前填写 `.env` 文件中的凭证即可。
 
+## 使用方式
+
+Agent 加载此 skill 后，按以下步骤操作：
+
+1. 读取 skill 目录下的 `.env` 获取凭证
+2. 根据任务选择模型（生图用 `gpt-image-2-1k`，视频用 `grok-imagine-video`）
+3. 按下方对应接口的示例构造请求，替换凭证和参数
+4. 响应处理：`gpt-image-2` 返回 URL 直链，`-1k/-2k/-4k` 返回 base64 data URL，需 base64 解码
+5. 下载后上传 COS 获取公网链接
+
 ## 自动选择 Key
 
 - `gpt-image-2*` → `$MANXIAOBAI_IMAGINE_KEY`
